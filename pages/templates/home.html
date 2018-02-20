@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+
+    <title>Search Auto Complete Example</title>
+</head>
+<body>
+<div id="ac1">
+    <p>Search for a Programming Language:</p>
+    <input type="text" id="ac1Input">
+    <button id="ac1Submit">Search</button>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script>
+    // using jQuery
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    var csrftoken = getCookie('csrftoken');
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+
+    var getAcData = function (request, response) {
+        $.getJSON(
+            "/senator_ac/?name=" + request.term,
+            function (data) {
+                console.log(data);
+                var arr = [];
+                for (var i = 0; i < data.length; i++) {
+                    arr.push(data[i].fields.first_name + ' ' + data[i].fields.last_name)
+                }
+                response(arr);
+            });
+    };
+
+    var selectItem = function (event, ui) {
+        $('#ac1Input').val(ui.item.value);
+        return false;
+    };
+
+    $('#ac1Input').autocomplete({
+        source: getAcData,
+        select: selectItem,
+        change: function () {
+            $(this).val("").css("display", 2);
+        }
+    })
+</script>
+</body>
+</html>
